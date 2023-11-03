@@ -3,19 +3,19 @@ Advanced stats repo for testing and preparing for the Stats exam.
 
 Topics in the lectures:
 
-1. Introduction, Statistical Inference
-2. Parametric models and the Central Limit Theory
-3. Bayesian inference
-4. Fisherian Inference and Generalised Linear Models
-5. Survival analysis and the EM algorithm
-6. The Jacknife and the Bootstrap
-7. Confidence Intervals
-8. Cross validation and prediction error
-9. Objective Bayes Inference and MCMC
-10.
-11.
-12.Inference and Model Selection
-13.
+1. Introduction, Statistical Inference - Veron
+2. Parametric models and the Central Limit Theory - Gino
+3. Bayesian inference - Bogdan
+4. Fisherian Inference and Generalised Linear Models - Veron
+5. Survival analysis and the EM algorithm - Gino
+6. The Jacknife and the Bootstrap - Bogdan
+7. Confidence Intervals - Gino
+8. Cross validation and prediction error - Bogdan
+9. Objective Bayes Inference and MCMC - Veron
+10. 
+11. 
+12. Inference and Model Selection
+13. 
 
 
 Exam focus:
