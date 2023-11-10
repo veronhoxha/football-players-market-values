@@ -17,7 +17,6 @@ Topics in the lectures:
 12. Inference and Model Selection
 13. 
 
-
 Exam focus:
 1. Which question to ask the dataset;
 2. Applied methods
