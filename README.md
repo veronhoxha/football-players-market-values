@@ -12,8 +12,8 @@ Topics in the lectures:
 7. Confidence Intervals - Gino
 8. Cross validation and prediction error - Bogdan
 9. Objective Bayes Inference and MCMC - Veron
-10. 
-11. 
+10. Large-Scale Hypothesis Testing and False Discovery Rates - Veron, Gino, Bogdan
+11. Feature Selection and Shrinkage Methods for Regression
 12. Inference and Model Selection
 13. 
 
