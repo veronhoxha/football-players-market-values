@@ -324,4 +324,5 @@ def hist_dist(df, cols):
 
     fig, ax = plt.subplots
     for c in cols:
+        pass
 
