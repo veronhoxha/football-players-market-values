@@ -1,0 +1,41 @@
+ATTACKING
+83 Crossing
+89 Finishing
+60 Heading accuracy
+91 Short passing
+86 Volleys
+SKILL
+96 Dribbling
+93 Curve
+93 FK Accuracy
+90 Long passing
+93 Ball control
+MOVEMENT
+87 Acceleration
+74 Sprint speed
+91 Agility
+88 Reactions
+95 Balance
+POWER
+83 Shot power
+71 Jumping
+70 Stamina
+68 Strength
+90 Long shots
+MENTALITY
+44 Aggression
+40 Interceptions
+91 Att. Position
+92 Vision
+75 Penalties
+96 Composure
+DEFENDING
+20 Defensive awareness
+35 Standing tackle
+24 Sliding tackle
+GOALKEEPING
+6 GK Diving
+11 GK Handling
+15 GK Kicking
+14 GK Positioning
+8 GK Reflexes
