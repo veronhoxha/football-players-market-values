@@ -320,12 +320,3 @@ def calculate_age(date_of_birth, baseline="2021-05-08"):
                                                     date_of_birth.day))
 
 
-<<<<<<< HEAD
-=======
-def hist_dist(df, cols):
-
-    fig, ax = plt.subplots
-    for c in cols:
-        pass
-
->>>>>>> 01f49830a31a8d107a991a053abeae8183f3e3f5
