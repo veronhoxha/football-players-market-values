@@ -15,9 +15,9 @@ Topics in the lectures:
 10. Large-Scale Hypothesis Testing and False Discovery Rates - Veron, Gino, Bogdan
 11. Feature Selection and Shrinkage Methods for Regression
 12. Inference and Model Selection
-13. 
 
 Exam focus:
 1. Which question to ask the dataset;
 2. Applied methods
 3. Presentation
+
