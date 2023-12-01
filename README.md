@@ -17,10 +17,12 @@ Topics in the lectures:
     12. Inference and Model Selection
 
 Exam focus:
+
     1. Which question to ask the dataset;
     2. Applied methods
     3. Presentation
 
 Main focus: 
+
     1. Have a goal/expectations in the beginning and see in the end if we achieve it
     2. It's good to have contrast and we need to explore different things (divide some parts)
