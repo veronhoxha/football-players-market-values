@@ -320,3 +320,39 @@ def calculate_age(date_of_birth, baseline="2021-05-08"):
                                                     date_of_birth.day))
 
 
+def detect_retired(players_df):
+    '''
+    Function to detect players considered retired under these assumptions/conditions:
+     - Last season < 2021: The player hasn't played for more than 6 months
+     - No current club (NAN): The player doesn't have a current club
+     - No Market value in EUR (NAN): The player doesn't have an estimated market value 
+     - No Contract Expiration date (NAN): The player doesn't hold a contract with a club
+
+    Takes as an argument a valid players dataframe with the previously mentioned attributes and returns a copy of the dataframe with a "retired"
+    column containing a boolean flag. 
+    '''
+    players_df["retired"] = False
+    players_df.loc[(players_df.last_season < 2021) & (players_df.current_club_name.isna()) & 
+                   (players_df.market_value_in_eur.isna()) & (players_df.contract_expiration_date.isna()), "retired"] = True
+    
+    return players_df
+
+
+def write_life_table(life_table, filepath="life_table.txt"):
+
+    with open(filepath, "w") as outfile:
+
+        for ix, row in life_table.iterrows():
+
+            rw = []
+
+            for col in life_table.columns:
+                if (col == "age") or (col == "n") or (col == "retired"):
+                    x = str(int(row[col]))
+                else:
+                    x = str(round(row[col],3))
+                rw.append(x)
+        
+            outfile.write(" & ".join(rw))
+            outfile.write(" \\\\")
+            outfile.write("\n")
