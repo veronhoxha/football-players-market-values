@@ -338,21 +338,104 @@ def detect_retired(players_df):
     return players_df
 
 
-def write_life_table(life_table, filepath="life_table.txt"):
+def write_latex_table(table, dtypes: dict=None, decimals: int=3, filepath: str="life_table.txt"):
+
+    if dtypes == None:
+        dtypes = {}
 
     with open(filepath, "w") as outfile:
 
-        for ix, row in life_table.iterrows():
+        for ix, row in table.iterrows():
 
             rw = []
 
-            for col in life_table.columns:
-                if (col == "age") or (col == "n") or (col == "retired"):
-                    x = str(int(row[col]))
+            for col in table.columns:
+                
+                if col in dtypes:
+
+                    if dtypes[col] == int:
+                        x = f"{row[col]:.0f}"
+                    elif dtypes[col] == float:
+                        x = f"{row[col]:.{decimals}f}"
+                    else:
+                        x = f"{row[col]}"            
+
                 else:
-                    x = str(round(row[col],3))
+                    x = f"{row[col]}"
+
                 rw.append(x)
         
             outfile.write(" & ".join(rw))
             outfile.write(" \\\\")
             outfile.write("\n")
+
+
+def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 1000}, random_seed: int=28):
+    '''
+    Function that takes a players dataframe with at least an age (int) and retired (boolean) fields. Allows for bootstrap simulations to achieve the 
+    desired Confidence Intervals for the Survival rate.
+    '''
+    
+    # Sanity check
+    if "age" not in players_df.columns or "retired" not in players_df.columns:
+        raise Exception("The dataframe must contain at least a field named 'age' (integer) with the age of the observation, and 'retired' (boolean)\
+                        denoting the event of interest.")
+
+    if "sample_size" not in bootstrap_settings:
+        bootstrap_settings["sample_size"] = len(players_df)
+
+    def __compute_retire_table(players_df):
+    
+        # Get the count and amount of retired players by age 
+        retire_table = players_df.groupby("age").agg({"age": "count", "retired": "sum"}).rename(columns={"age": "n"})
+
+        # Compute h_hat
+        retire_table["h"] = retire_table.retired / retire_table.n
+        retire_table = retire_table.reset_index(drop=False)
+
+        # Start with prob. 1
+        A = [1]
+
+        # Compute S
+        for ix, row in retire_table.iterrows():
+            # Row zero is prob. 1
+            if ix == 0:
+                pass
+            else:
+                # The Survival probability of this year, is the prob. of having survived last year minus the hazard rate times the prob.
+                A.append(A[ix-1] - (row.h * A[ix-1]))
+            
+
+        retire_table["A"] = A
+        
+        return retire_table
+    
+    # Collection of survival functions for simulations
+    survival_sims = []
+
+    # For each simulation, draw a bootstrap sample of players, calculate the retire_table and extract the Survival rate by age
+    for _ in range(bootstrap_settings["simulations"]):
+        bootstrap_sample = players_df.sample(bootstrap_settings["sample_size"], replace=True, random_state=random_seed)  # Sampling with replacement
+        
+        # Compute the retire table of the sample
+        ret_table_sim = __compute_retire_table(bootstrap_sample)
+        # Add the resulting Survival rate to the list
+        survival_sims.append(ret_table_sim[["age", "A"]])
+
+    # Join the simulations by age to calculate the conf. interval
+    survival_conf_int = pd.DataFrame([x for x in range(min(players_df.age), max(players_df.age)+1)], columns=["age"])
+
+    # Join all results
+    for ss in survival_sims:
+        survival_conf_int = survival_conf_int.merge(ss, on="age", how="left")
+
+    # Concat the table with all observations and the confidence intervals from the bootstrapping
+    retire_table = pd.concat([__compute_retire_table(players_df), survival_conf_int.iloc[:,1:].quantile(q=[ci[0], ci[1]], axis=1).T], axis=1)
+
+    # Add expectancy
+    expectancy = retire_table['A'][::-1]
+    retire_table["e"] = expectancy.cumsum()[::-1]
+
+    return retire_table
+
+
