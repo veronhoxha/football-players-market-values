@@ -370,7 +370,7 @@ def write_latex_table(table, dtypes: dict=None, decimals: int=3, filepath: str="
             outfile.write("\n")
 
 
-def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 1000}, random_seed: int=28):
+def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 1000}):
     '''
     Function that takes a players dataframe with at least an age (int) and retired (boolean) fields. Allows for bootstrap simulations to achieve the 
     desired Confidence Intervals for the Survival rate.
@@ -415,7 +415,8 @@ def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: d
 
     # For each simulation, draw a bootstrap sample of players, calculate the retire_table and extract the Survival rate by age
     for _ in range(bootstrap_settings["simulations"]):
-        bootstrap_sample = players_df.sample(bootstrap_settings["sample_size"], replace=True, random_state=random_seed)  # Sampling with replacement
+        bootstrap_sample = players_df.sample(bootstrap_settings["sample_size"], replace=True, random_state=None)  # Sampling with replacement.
+                                                            # We need to set random state to None to avoid resampling the same observations everytime
         
         # Compute the retire table of the sample
         ret_table_sim = __compute_retire_table(bootstrap_sample)
@@ -439,3 +440,6 @@ def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: d
     return retire_table
 
 
+def log_rank(pop_A, pop_B):
+
+    pop_A.age.
