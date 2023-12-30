@@ -1,0 +1,18 @@
+& player\_id & description \\
+& first\_name & description \\
+& last\_name & description \\
+& last\_season & description \\
+& country\_of\_birth & description \\
+& city\_of\_birth & description \\
+& country\_of\_citizenship & description \\
+& date\_of\_birth & description \\
+& sub\_position & description \\
+& position & description \\
+& foot & description \\
+& height\_in\_cm & description \\
+& market\_value\_in\_eur & description \\
+& highest\_market\_value\_in\_eur & description \\
+& contract\_expiration\_date & description \\
+& current\_club\_domestic\_competition\_id & description \\
+& current\_club\_name & description \\
+, short\_name, long\_name, player\_positions, overall, potential, value\_eur, wage\_eur, age, dob, height\_cm, weight\_kg, club\_name, league\_name, league\_level, club\_contract\_valid\_until, nationality\_name, nation\_position, preferred\_foot, weak\_foot, skill\_moves, international\_reputation, work\_rate, body\_type, release\_clause\_eur, player\_traits, pace, shooting, passing, dribbling, defending, physic, attacking\_crossing, attacking\_finishing, attacking\_heading\_accuracy, attacking\_short\_passing, attacking\_volleys, skill\_dribbling, skill\_curve, skill\_fk\_accuracy, skill\_long\_passing, skill\_ball\_control, movement\_acceleration, movement\_sprint\_speed, movement\_agility, movement\_reactions, movement\_balance, power\_shot\_power, power\_jumping, power\_stamina, power\_strength, power\_long\_shots, mentality\_aggression, mentality\_interceptions, mentality\_positioning, mentality\_vision, mentality\_penalties, mentality\_composure, defending\_marking\_awareness, defending\_standing\_tackle, defending\_sliding\_tackle, goalkeeping\_diving, goalkeeping\_handling, goalkeeping\_kicking, goalkeeping\_positioning, goalkeeping\_reflexes, goalkeeping\_speed, ls, st, rs, lw, lf, cf, rf, rw, lam, cam, ram, lm, lcm, cm, rcm, rm, lwb, ldm, cdm, rdm, rwb, lb, lcb, cb, rcb, rb, gk

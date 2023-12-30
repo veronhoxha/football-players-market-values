@@ -6,6 +6,9 @@ from bs4 import BeautifulSoup # xml parsing
 from IPython.display import clear_output
 import Levenshtein
 from datetime import datetime
+from scipy.stats import chi2
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def extract_website_structure(filepath: str="FIFA_attribute_structure.txt"):
 
@@ -370,7 +373,40 @@ def write_latex_table(table, dtypes: dict=None, decimals: int=3, filepath: str="
             outfile.write("\n")
 
 
-def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 1000}):
+def __compute_retire_table(players_df, age_range=None):
+
+    # Get the count and amount of retired players by age 
+    retire_table = players_df.groupby("age").agg({"age": "count", "retired": "sum"}).rename(columns={"age": "n"})
+
+    # To ensure all ages appear in the rows
+    if age_range == None:
+        age_range = range(players_df.age.min(), players_df.age.max()+1)
+
+    retire_table = retire_table.merge(pd.DataFrame(age_range, columns=["age"]), on="age", how="right")
+    retire_table.fillna(0)
+
+    # Compute h_hat
+    retire_table["h"] = retire_table.retired / retire_table.n
+    retire_table = retire_table.reset_index(drop=False)
+
+    # Start with prob. 1
+    A = [1]
+
+    # Compute S
+    for ix, row in retire_table.iterrows():
+        # Row zero is prob. 1
+        if ix == 0:
+            pass
+        else:
+            # The Survival probability of this year, is the prob. of having survived last year minus the hazard rate times the prob.
+            A.append(A[ix-1] - (row.h * A[ix-1]))
+        
+    retire_table["A"] = A
+    
+    return retire_table
+
+
+def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 100}):
     '''
     Function that takes a players dataframe with at least an age (int) and retired (boolean) fields. Allows for bootstrap simulations to achieve the 
     desired Confidence Intervals for the Survival rate.
@@ -384,31 +420,8 @@ def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: d
     if "sample_size" not in bootstrap_settings:
         bootstrap_settings["sample_size"] = len(players_df)
 
-    def __compute_retire_table(players_df):
-    
-        # Get the count and amount of retired players by age 
-        retire_table = players_df.groupby("age").agg({"age": "count", "retired": "sum"}).rename(columns={"age": "n"})
-
-        # Compute h_hat
-        retire_table["h"] = retire_table.retired / retire_table.n
-        retire_table = retire_table.reset_index(drop=False)
-
-        # Start with prob. 1
-        A = [1]
-
-        # Compute S
-        for ix, row in retire_table.iterrows():
-            # Row zero is prob. 1
-            if ix == 0:
-                pass
-            else:
-                # The Survival probability of this year, is the prob. of having survived last year minus the hazard rate times the prob.
-                A.append(A[ix-1] - (row.h * A[ix-1]))
-            
-
-        retire_table["A"] = A
-        
-        return retire_table
+    # Compute the retire table with all observations
+    retire_table = __compute_retire_table(players_df)
     
     # Collection of survival functions for simulations
     survival_sims = []
@@ -421,25 +434,121 @@ def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: d
         # Compute the retire table of the sample
         ret_table_sim = __compute_retire_table(bootstrap_sample)
         # Add the resulting Survival rate to the list
-        survival_sims.append(ret_table_sim[["age", "A"]])
+        survival_sims.append(ret_table_sim["A"])
 
-    # Join the simulations by age to calculate the conf. interval
-    survival_conf_int = pd.DataFrame([x for x in range(min(players_df.age), max(players_df.age)+1)], columns=["age"])
+        print(f"{_/bootstrap_settings['simulations']:.1%}", end="\r")
 
     # Join all results
-    for ss in survival_sims:
-        survival_conf_int = survival_conf_int.merge(ss, on="age", how="left")
+    survival_conf_int = pd.concat(survival_sims, axis=1)
 
     # Concat the table with all observations and the confidence intervals from the bootstrapping
-    retire_table = pd.concat([__compute_retire_table(players_df), survival_conf_int.iloc[:,1:].quantile(q=[ci[0], ci[1]], axis=1).T], axis=1)
+    retire_table = pd.concat([retire_table, survival_conf_int.quantile(q=[ci[0], ci[1]], axis=1).T], axis=1)
+    retire_table.drop("index", axis=1, inplace=True)
 
     # Add expectancy
     expectancy = retire_table['A'][::-1]
     retire_table["e"] = expectancy.cumsum()[::-1]
 
+    # This is to ensure all column names are strings
+    retire_table.rename(columns={0.025: "0.025", 0.975: "0.975"}, inplace=True)
+
     return retire_table
 
 
-def log_rank(pop_A, pop_B):
+def __log_rank_test(tableA, tableB):
 
-    pop_A.age.
+    # Join both tables
+    joined = tableA.merge(tableB, on="age", how="inner", suffixes=("_A", "_B"))
+
+    # Calculate the expected number of retire players under the null hypothesis
+    # Expected number of retired players at a given age for each group:
+        # Total number of players at age i * Total number of retired players at age i / Total number of players for both groups
+    joined["expected_A"] = (joined["n_A"]) * (joined["retired_A"] + joined["retired_B"]) / (joined["n_A"] + joined["n_B"])
+    joined["expected_B"] = (joined["n_B"]) * (joined["retired_A"] + joined["retired_B"]) / (joined["n_A"] + joined["n_B"]) 
+
+    # Calculate the Chi2 stat
+    stat = (joined.retired_A.sum() - joined.expected_A.sum())**2 / joined.expected_A.sum() + (joined.retired_B.sum() - joined.expected_B.sum())**2 / joined.expected_B.sum()
+
+    # Get the P-Value
+    p_value = 1-chi2.cdf(stat, df=1)
+
+    return stat, p_value
+
+
+def pairwise_log_rank_test(groups, labels=None , alpha=0.05, correct_alpha=True, n_tests=None):
+
+
+    if labels == None:
+        labels = [f"Group {i}" for i in range(1, len(groups)+1)]
+
+    if correct_alpha:
+
+        comparisons = (len(groups) * (len(groups)-1) / 2)
+
+        if n_tests:
+            alpha = alpha / n_tests
+        else:     
+            alpha = alpha / comparisons
+        print(f"### {comparisons:.0f} Comparisons | Corrected alpha: {alpha:.4f} ###")
+
+    for i in range(len(groups)-1):
+        for j in range(i, len(groups)):
+            if labels[i] != labels[j]:
+                s, p = __log_rank_test(groups[i], groups[j])
+                print(f"{labels[i]} vs {labels[j]} -> Stat: {s} - P-Value: {p} - {'Rejected' if p < alpha else 'Not Rejected'}")
+
+
+def km_curves(groups, labels=None, figsize=(16,6), ci=False, color_palette="Set1"):
+
+    if not isinstance(groups, list):
+        groups = [groups]
+
+    if (labels != None) and (len(labels) != len(groups)):
+        raise Exception("The length of the labels must match the length of the groups plotted.")
+
+    # Create the figure with size and border linewidth
+    fig, ax = plt.subplots(figsize=figsize)
+    plt.rcParams['axes.linewidth'] = 12
+
+    # Set of colors for lines
+    colors = sns.color_palette(color_palette)
+
+    # Set the plots limits to the minimum age of the observed groups
+    xmin = min([g.age.min() for g in groups])
+    xmax = max([g.age.max() for g in groups])
+
+    legend = []
+
+    # Plot Survival curves
+    for i in range(len(groups)):
+        # Plot the line
+        sns.lineplot(data= groups[i], x="age", y="A", drawstyle="steps-post", color=colors[i], errorbar=None, linewidth=2, ax=ax)
+        if labels != None:
+            legend.append(labels[i])
+
+        if ci:
+            # Plot Conf. Intervals
+            ax.fill_between(groups[i].age, groups[i]["0.025"], groups[i]["0.975"], color=colors[i], alpha=0.2, step="post")
+            if labels != None:
+                legend.append(f"{labels[i]} (95% CI)")
+
+    if len(groups) == 1:
+        # Find the intersection between the curve and the 50%
+        x_50, y_50 = groups[i].iloc[(groups[i]['A']-0.5).abs().argsort()[:1], 0].values[0], groups[i].iloc[(groups[i]['A']-0.5).abs().argsort()[:1], 4].values[0]
+        ax.hlines(y = 0.5, xmin=xmin , xmax = x_50, color= 'r', linestyles='dotted')
+        ax.vlines(x = x_50, ymin=0 , ymax = y_50, color= 'r', linestyles='dotted')
+        ax.text(xmin+(x_50-xmin)/2, 0.52,"Median", color="black", alpha=1)
+
+    # Set the x and y limits, put all ticks, labels and despine
+    if labels != None:
+        ax.legend(legend)       
+    ax.set_xlim(xmin)
+    ax.set_ylim(0)        
+    ax.set_xticks(range(xmin, xmax+1))
+    ax.set_xlabel("Age", weight="bold") 
+    ax.set_ylabel("Activity Rate (Â)", weight="bold")
+    sns.despine(ax=ax, top=True, right=True)
+    plt.show()
+    
+
+
