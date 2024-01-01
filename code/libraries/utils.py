@@ -383,10 +383,11 @@ def __compute_retire_table(players_df, age_range=None):
         age_range = range(players_df.age.min(), players_df.age.max()+1)
 
     retire_table = retire_table.merge(pd.DataFrame(age_range, columns=["age"]), on="age", how="right")
-    retire_table.fillna(0)
+    retire_table = retire_table.fillna(0)
 
     # Compute h_hat
     retire_table["h"] = retire_table.retired / retire_table.n
+    retire_table["h"] = retire_table["h"].fillna(0)
     retire_table = retire_table.reset_index(drop=False)
 
     # Start with prob. 1
@@ -406,7 +407,7 @@ def __compute_retire_table(players_df, age_range=None):
     return retire_table
 
 
-def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 100}):
+def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: dict={"simulations": 100}, age_range=None):
     '''
     Function that takes a players dataframe with at least an age (int) and retired (boolean) fields. Allows for bootstrap simulations to achieve the 
     desired Confidence Intervals for the Survival rate.
@@ -421,7 +422,7 @@ def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: d
         bootstrap_settings["sample_size"] = len(players_df)
 
     # Compute the retire table with all observations
-    retire_table = __compute_retire_table(players_df)
+    retire_table = __compute_retire_table(players_df, age_range=age_range)
     
     # Collection of survival functions for simulations
     survival_sims = []
@@ -432,7 +433,7 @@ def get_retire_table(players_df, ci: tuple=(0.025, 0.975), bootstrap_settings: d
                                                             # We need to set random state to None to avoid resampling the same observations everytime
         
         # Compute the retire table of the sample
-        ret_table_sim = __compute_retire_table(bootstrap_sample)
+        ret_table_sim = __compute_retire_table(bootstrap_sample, age_range=age_range)
         # Add the resulting Survival rate to the list
         survival_sims.append(ret_table_sim["A"])
 
