@@ -1,14 +1,35 @@
 
+# Data handling
 import numpy as np
 import pandas as pd
+
+# Scapping
 import requests
 from bs4 import BeautifulSoup # xml parsing
+
+# Others
 from IPython.display import clear_output
 import Levenshtein
 from datetime import datetime
+import os
+
+# Statistical
 from scipy.stats import chi2
+
+# Plots
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+# Prediction models
+from sklearn.linear_model import Lasso, Ridge
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+import joblib as jl
+
 
 def extract_website_structure(filepath: str="FIFA_attribute_structure.txt"):
 
@@ -550,6 +571,93 @@ def km_curves(groups, labels=None, figsize=(16,6), ci=False, color_palette="Set1
     ax.set_ylabel("Activity Rate (Â)", weight="bold")
     sns.despine(ax=ax, top=True, right=True)
     plt.show()
+
+
+class RegressionModel:
+
+    def __init__(self, name, model, seed):
+        
+        self.model = model
+        self.seed = seed
+        self.name = name
+
+    def fit(self, X, y):
+
+        # handling missing values //// filling missing values in these feature columns by replacing them with the median of each column
+        X = X.fillna(X.median())
+        y = y.fillna(0)
+
+        self.X, self.y = X, y
+        
+        self.preprocessor = ColumnTransformer(transformers=[('num', StandardScaler(), X.columns)])
+        self.pipeline = Pipeline([('preprocessor', self.preprocessor), (f"{self.name}", self.model)])
+
+
+    def hyperparameter_search(self, params):
+
+        # Train-Valid-Test split to find best parameters
+        X_train, X_valid, y_train, y_valid = train_test_split(self.X, self.y, test_size=0.5, random_state=self.seed)
+
+        print(f"Train-Valid sizes: {len(X_train)} ({len(X_train) / len(self.X):.0%}) / {len(X_valid)} ({len(X_valid) / len(self.X):.0%})")
+
+        gs = GridSearchCV(self.pipeline, params, cv=5, scoring='neg_mean_squared_error', verbose=1)
+        gs.fit(X_train, y_train)
+
+        # Extract estimator and params
+        self.model = gs.best_estimator_
+        self.best_params = gs.best_params_
+
+        # Predict on test set to compute metrics
+        self.y_hat = self.model.predict(X_valid).round(1)
+        self.y_hat[self.y_hat < 0] = 0
+
+        # Metrics
+        self.rmse = np.sqrt(mean_squared_error(y_valid, self.y_hat))
+        self.mae = mean_absolute_error(y_valid, self.y_hat)
+        self.r2 = r2_score(y_valid, self.y_hat)
+
+        print(f"BEST PARAMS: {self.best_params}\nRMSE: {self.rmse}\nMAE:{self.mae}\nR2:{self.r2}")
+
+
+    def save_model(self, save_dir):
+
+        # Save model to file
+        jl.dump(self.model, save_dir+f"{self.name}_best.joblib")
+
+        if os.path.exists(save_dir+"models.summary.txt"):
+            file = open(save_dir+"models.summary.txt", "a")
+        else:
+            file = open(save_dir+"models.summary.txt", "w")
+        file.write("\n")
+        file.write(f"Model: {self.name}\nBEST PARAMS: {self.best_params}\nRMSE: {self.rmse}\nMAE:{self.mae}\nR2:{self.r2}\n")
+
+
+    def predict(self, X):
+
+        return self.pipeline.predict(X)
     
 
+def model_process(models_hyper, X_train, y_train, process, save_dir, seed):
 
+    # Collection of models
+    models = {}
+
+    # For each of the models to test
+    for m in models_hyper:
+        if process:
+            model = RegressionModel(name=m, model=models_hyper[m]["model"], seed=seed) # Create the model
+            model.fit(X_train, y_train) # Fit with the training data (further validation split in class)
+            model.hyperparameter_search(models_hyper[m]["params"]) # Find the best parameters
+            model.save_model(save_dir=save_dir) # Save the best model
+        else:
+            model = RegressionModel(name=m, model=jl.load(save_dir+f"{m}_best.joblib"), seed=seed) # Load models
+        
+        models[m] = model
+
+    if not process:
+        # Print summary
+        with open(save_dir + "models.summary.txt", "r") as summary:
+            for line in summary.readlines():
+                        print(line.strip())
+
+    return models

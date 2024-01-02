@@ -1,0 +1,18 @@
+
+Model: Lasso
+BEST PARAMS: {'Lasso__alpha': 500}
+RMSE: 6713699.348535927
+MAE:3161109.335954301
+R2:0.49042659633802477
+
+Model: Ridge
+BEST PARAMS: {'Ridge__alpha': 100}
+RMSE: 6721560.880688356
+MAE:3146536.633646953
+R2:0.4892325085615402
+
+Model: RandomForestRegressor
+BEST PARAMS: {'RandomForestRegressor__max_depth': None, 'RandomForestRegressor__min_samples_split': 5, 'RandomForestRegressor__n_estimators': 100, 'RandomForestRegressor__random_state': 7}
+RMSE: 2692864.5610971027
+MAE:748439.1357526882
+R2:0.9180192293108058
