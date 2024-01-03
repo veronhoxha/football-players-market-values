@@ -698,3 +698,15 @@ def Weighted_metropolis_mcmc(data, iterations, initial_step_size, target_accepta
             step_size *= 1 + adaptation_size * (acceptance_rate - target_acceptance)
 
     return np.array(samples[iterations//2:])
+
+
+# Jackknife function for CI
+def jackknife_ci(data, conf_level=0.95):
+    n = len(data)
+    jackknife_means = np.array([np.mean(np.delete(data, i)) for i in range(n)])
+    mean_estimate = np.mean(jackknife_means)
+    jackknife_var = (n - 1) / n * np.sum((jackknife_means - mean_estimate) ** 2)
+    se = np.sqrt(jackknife_var)
+    z_score = norm.ppf((1 + conf_level) / 2)
+    ci = mean_estimate + np.array([-1, 1]) * z_score * se
+    return mean_estimate, ci
