@@ -14,7 +14,7 @@ from datetime import datetime
 import os
 
 # Statistical
-from scipy.stats import chi2
+from scipy.stats import chi2, norm
 
 # Plots
 import matplotlib.pyplot as plt
@@ -661,3 +661,40 @@ def model_process(models_hyper, X_train, y_train, process, save_dir, seed):
                         print(line.strip())
 
     return models
+
+def Weighted_metropolis_mcmc(data, iterations, initial_step_size, target_acceptance=0.25, adaptation_size=0.01):
+    num_params = len(data) 
+    current_params = np.random.random(num_params)  
+    samples = [current_params]
+    step_size = initial_step_size
+    acceptance_count = np.zeros(num_params)
+
+    for iteration in range(1, iterations + 1):
+        new_params = current_params + np.random.normal(0, step_size, num_params)
+        new_params = np.clip(new_params, 0, 1)  
+
+        # Compute the weighted likelihood for each parameter
+        weights = (data['n'] - data['retired']) / data['n']
+        current_likelihood = np.prod((current_params ** data['survival_prob']) ** weights)
+        new_likelihood = np.prod((new_params ** data['survival_prob']) ** weights)
+
+        # Compute the weighted prior for each parameter
+        current_prior = np.prod(norm.pdf(current_params, data['survival_prob'], 0.1) ** weights)
+        new_prior = np.prod(norm.pdf(new_params, data['survival_prob'], 0.1) ** weights)
+
+        # Compute the acceptance ratio for each parameter
+        acceptance_ratio = (new_likelihood * new_prior) / (current_likelihood * current_prior)
+
+        # Accept or reject the new parameters
+        accept = acceptance_ratio > np.random.random(num_params)
+        current_params[accept] = new_params[accept]
+        acceptance_count += accept
+        samples.append(current_params.copy())
+
+        # Adapt step size (only during the burn-in period)
+        if iteration <= iterations // 2:
+            acceptance_rate = acceptance_count / iteration
+            # Adjust the step size to target the acceptance rate for each parameter
+            step_size *= 1 + adaptation_size * (acceptance_rate - target_acceptance)
+
+    return np.array(samples[iterations//2:])
