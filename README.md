@@ -1,40 +1,44 @@
-# advanced_stats
-Advanced stats repo for testing and preparing for the Stats exam. 
+# Beyond the Pitch: A Data-Driven Approach to Player Careers and Valuations in Football - Project Structure
 
-Topics in the lectures:
+## Introduction
+This repository hosts all the necessary resources for the ``"Beyond the Pitch: A Data-Driven Approach to Player Careers and Valuations in Football"`` project.
 
-    1. Introduction, Statistical Inference - Veron
-    2. Parametric models and the Central Limit Theory - Gino
-    3. Bayesian inference - Bogdan
-    4. Fisherian Inference and Generalised Linear Models - Veron
-    5. Survival analysis and the EM algorithm - Gino
-    6. The Jacknife and the Bootstrap - Bogdan
-    7. Confidence Intervals - Gino
-    8. Cross validation and prediction error - Bogdan
-    9. Objective Bayes Inference and MCMC - Veron
-    10. Large-Scale Hypothesis Testing and False Discovery Rates - Veron, Gino, Bogdan
-    11. Feature Selection and Shrinkage Methods for Regression
-    12. Inference and Model Selection
+## Table of Contents
+- [Introduction](#introduction)
+- [Project Structure](#project-structure)
+  - [Code](#code)
+  - [Data](#data)
+  - [Additional Folders](#additional-folders)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributors](#contributors)
 
-Exam focus:
+## Project Structure
 
-    1. Which question to ask the dataset;
-    2. Applied methods
-    3. Presentation
+### Code
+Located in the **"code"** folder:
+- `Project_Notebook.ipynb`: Main Jupyter Notebook where all the analyses are performed.
+- `libraries/utils.py`:  This file, located in the libraries subfolder, contains all the functions used in `Project_Notebook.ipynb`.
+- `/models`:  This folders contains the results of the prediction models for all variants.
 
-Main focus: 
+### Data
+Located in the **"data"** folder:
+- This directory contains both the raw and processed data utilized in the project.
 
-    1. Have a goal/expectations in the beginning and see in the end if we achieve it
-    2. It's good to have contrast and we need to explore different things (divide some parts)
+### Additional Folders
+- `images`: Images used in reports.
 
-Next steps:
-1. Maybe some more descriptive stats
-2. Kaplan-Meier Survival rate
-2.a) Set the assumptions for what age the player is retired. 
-2.b) Markov-Chain for playing next year( ex. i am 24, what is the probability that i am going to play at 25, 26 and so on, the initial probability is the survival rate given by Gino's KM)
-3. Prediction Model for Market Value( PCA, Regularizations)
-4. See if by incorporating the survival rate changes the model's prediction. So one model that has survival rate as a parameter and one that does not and compare between them. 
-4. 
+## Installation
+Ensure Python 3.10.11 is installed and then run:
+- `pip install -r requirements.txt`
 
-Notes from Michael:
-1. Market value in log scale
+## Usage
+To run the notebook and recreate results:
+1. Navigate to the project directory.
+2. Run `Project_Notebook.ipynb` using the "Run All" feature in VS Code or another IDE.
+
+## Contributors
+This project was created by:
+- Gino F. Fazzi
+- Veron Hoxha
+- Constantin-Bogdan Craciun
