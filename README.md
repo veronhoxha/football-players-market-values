@@ -19,7 +19,7 @@ This repository hosts all the necessary resources for the ``"Beyond the Pitch: A
 Located in the **"code"** folder:
 - `Project_Notebook.ipynb`: Main Jupyter Notebook where all the analyses are performed.
 - `utils.py`:  This file, contains all the functions used in `Project_Notebook.ipynb`.
-- `/models`:  This folders contains the results of the prediction models for all variants.
+- `/models`:  This folder contains the results of the prediction models for all variants.
 
 ### Data
 Located in the **"data"** folder:
